@@ -1,0 +1,145 @@
+swagger: '2.0'
+info:
+  version: '1.0.0'
+  title: Тестовая служба работы с задачами
+  contact: {}
+host: www.example.com
+basePath: /
+schemes:
+- https
+consumes:
+- application/json
+produces:
+- application/json
+paths:
+  /task:
+    get:
+      description: >
+        1. Создает запись в БД (любой, на выбор разработчика) cо сгенерированным UUID, текущим временем и статусом `created`
+
+        2. Возвращает клиенту код 202 и UUID задачи
+
+        3. Обновляет в БД для данного UUID текущее время и меняет статус на `running`
+
+        4. Ждет 2 минуты (имитируя выполнение задачи)
+
+        5. Обновляет в БД для данного UUID текущее время и меняет статус на `finished`
+      summary: createTask
+      operationId: createTask
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        202:
+          description: Задача успешно созданы и запущена. UUID задачи в ответе
+          schema:
+            type: string
+            format: uuid
+          headers: {}
+        500:
+          description: Что-то пошло не так
+          schema: {}
+  /task/{taskId}:
+    get:
+      description: >-
+        1. Ищет в БД текущее состояние задачи.
+
+        2. Возвращает текущее состояние задачи
+      summary: getTaskSync
+      operationId: getTaskSync
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        type: string
+        format: uuid
+        description: UUID Задачи
+      responses:
+        200:
+          description: Состояние задачи
+          schema:
+            $ref: '#/definitions/TaskStatus'
+          headers: {}
+        400:
+          description: Передан не UUID
+          schema: {}
+        404:
+          description: Задача с {taskId} не найдена
+          schema: {}
+        500:
+          description: Что-то пошло не так
+          schema: {}
+  /task/{taskId}/finished:
+    get:
+      description: >
+        1. Ищет в БД текущее состояние задачи.
+
+        2. Если статус не `finished`, то
+           1. Ждет, когда задача завершится
+              * регулярно проверяя состояние задачи
+              * не ожидая дольше 5 минут
+           2. Отправляет клиенту состояние задачи
+        3. Иначе возвращает текущее состояние задачи
+      summary: getFinishedTask
+      operationId: getFinishedTask
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        type: string
+        format: uuid
+        description: UUID Задачи
+      responses:
+        200:
+          description: Состояние задачи
+          schema:
+            $ref: '#/definitions/TaskStatus'
+          headers: {}
+        400:
+          description: Передан не UUID
+          schema: {}
+        404:
+          description: Задача с {taskId} не найдена
+          schema: {}
+        408:
+          description: Ожидание превысило порог в 5 минут
+          schema: {}
+        500:
+          description: Что-то пошло не так
+          schema: {}
+definitions:
+  TaskStatus:
+    title: TaskStatus
+    description: '# Состояние задачи'
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/Status'
+      timestamp:
+        description: '## Дата и время изменения статуса'
+        type: string
+        format: date-time
+  Status:
+    title: Status
+    description: >-
+      ## статус задачи
+
+      - `created` Задача создана, но ещё не запущена
+
+      - `running` Задача выполняется
+
+      - `finished` Задача выполнена
+    type: string
+    enum:
+    - created
+    - running
+    - finished
+tags: []
+  
