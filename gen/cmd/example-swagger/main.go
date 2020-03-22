@@ -21,19 +21,18 @@ func main() {
 		panic(err)
 	}
 
-	config := config.Configure()
-	opt, err := pg.ParseURL(config.PostgresURI)
+	cfg := config.Configure()
+	opt, err := pg.ParseURL(cfg.PostgresURI)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	for attempts := 0; err != nil; err = migrations.Do(config.PostgresURI, config.MigrationDirectory, config.MigrationDirection) {
-		attempts++
-		if err != nil && attempts == 3 {
+	for err = migrations.Do(cfg.PostgresURI, cfg.MigrationDirectory, cfg.MigrationDirection); err != nil; {
+		if err != nil && cfg.ReconnectionAttempts == 0 {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		cfg.ReconnectionAttempts--
 		time.Sleep(5 * time.Second)
 	}
 
@@ -44,9 +43,9 @@ func main() {
 	// set the port this service will be run on
 
 	server.ConfigureAPI()
-	server.TLSPort = config.Port
-	server.TLSCertificate = config.TLSCert
-	server.TLSCertificateKey = config.TLSKey
+	server.TLSPort = cfg.Port
+	server.TLSCertificate = cfg.TLSCert
+	server.TLSCertificateKey = cfg.TLSKey
 	if err = server.Serve(); err != nil {
 		panic(err)
 	}

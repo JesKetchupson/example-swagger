@@ -13,7 +13,7 @@ func Do(uri string, migrationDir string, migrationDirection int) error {
 	db, err := sql.Open("postgres", uri)
 	defer db.Close()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	migrations := &migrate.FileMigrationSource{
