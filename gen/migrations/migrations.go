@@ -7,8 +7,9 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 )
 
-//Migrate run migrations
-func Migrate(uri string, migrationDir string, migrationDirection int) {
+//Do run migrations
+func Do(uri string, migrationDir string, migrationDirection int) error {
+
 	db, err := sql.Open("postgres", uri)
 	defer db.Close()
 	if err != nil {
@@ -21,6 +22,7 @@ func Migrate(uri string, migrationDir string, migrationDirection int) {
 
 	_, err = migrate.Exec(db, "postgres", migrations, migrate.MigrationDirection(migrationDirection))
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }

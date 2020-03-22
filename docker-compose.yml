@@ -1,0 +1,40 @@
+version: '3'
+volumes:
+  database_data:
+    driver: local
+services:
+  web:
+    build: .
+    image: app
+    ports:
+      - $PORT:$PORT
+    links:
+      - postgres
+    networks:
+      - net
+    #TODO sed for ci/cd
+    environment:
+      PORT: $PORT
+      POSTGRES_URI: "$POSTGRES_URI"
+      MIG_DIRECTORY: "$MIG_DIRECTORY"
+      MIG_DIRECTION: "$MIG_DIRECTION"
+      TLS_PRIVATE_KEY: "$TLS_PRIVATE_KEY"
+      TLS_CERTIFICATE: "$TLS_CERTIFICATE"
+ 
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - database_data:/var/lib/postgresql/data
+    networks:
+      - net
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_HOST: '$POSTGRES_HOST'
+      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+
+networks:
+  net:

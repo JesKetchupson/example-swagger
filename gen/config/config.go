@@ -19,11 +19,11 @@ type Config struct {
 //Configure reads config and return it  from env
 func Configure() Config {
 	return Config{
-		PostgresURI:        "postgres://postgres:postgres@localhost:5432/example?sslmode=disable", //os.GetEnv("PostgresURI")
-		Port:               8080,                                                                  //os.GetEnv("PORT")
+		PostgresURI:        os.Getenv("POSTGRES_URI"), //
+		Port:               8080,                      //os .GetEnv("PORT")
 		TLSCert:            flags.Filename(os.Getenv("TLS_CERTIFICATE")),
 		TLSKey:             flags.Filename(os.Getenv("TLS_PRIVATE_KEY")),
-		MigrationDirectory: "migrations", //os.Getenv("MIG_DIRECTORY")
-		MigrationDirection: 1,            //os.Getenv("MIG_DIRECTION")
+		MigrationDirectory: os.Getenv("MIG_DIRECTORY"), //
+		MigrationDirection: 1,                          //
 	}
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"time"
 
 	"gen/config"
 	"gen/migrations"
@@ -23,8 +25,18 @@ func main() {
 	opt, err := pg.ParseURL(config.PostgresURI)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
-	migrations.Migrate(config.PostgresURI, config.MigrationDirectory, config.MigrationDirection)
+
+	for attempts := 0; err != nil; err = migrations.Do(config.PostgresURI, config.MigrationDirectory, config.MigrationDirection) {
+		attempts++
+		if err != nil && attempts == 3 {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		time.Sleep(5 * time.Second)
+	}
+
 	restapi.Init(pg.Connect(opt))
 	api := operations.NewTaskListAPI(swaggerSpec)
 	server := restapi.NewServer(api)
